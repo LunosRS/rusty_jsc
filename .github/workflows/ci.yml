@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    name: cargo fmt
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
+  typos:
+    runs-on: ubuntu-latest
+    name: typos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@master
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-13, macos-14, macos-15, ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+        include:
+          - os: ubuntu-20.04
+            jsc_pkg: libjavascriptcoregtk-4.0-dev
+          - os: ubuntu-22.04
+            jsc_pkg: libjavascriptcoregtk-4.0-dev
+          - os: ubuntu-24.04
+            jsc_pkg: libjavascriptcoregtk-4.1-dev
+    name: cargo clippy + test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy
+
+      - name: install dependencies
+        run: |
+           if [ "$RUNNER_OS" == "Linux" ]; then
+             sudo apt update
+             sudo apt install pkg-config ${{ matrix.jsc_pkg }}
+           fi
+        shell: bash
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets --workspace -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace
+
+  build-ios:
+    runs-on: macos-latest
+    name: cargo build - ios
+    env:
+        RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          target: aarch64-apple-ios
+
+      - name: cargo build
+        run: cargo build --target aarch64-apple-ios --all-targets --workspace
+
+  build-doc:
+    name: cargo docs-rs
+    runs-on: ubuntu-22.04
+    env:
+      RUSTDOCFLAGS: -Dwarnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+      - uses: dtolnay/install@cargo-docs-rs
+      - name: install dependencies
+        run: |
+           if [ "$RUNNER_OS" == "Linux" ]; then
+             sudo apt update
+             sudo apt install pkg-config libjavascriptcoregtk-4.0-dev
+           fi
+        shell: bash
+      - run: cargo docs-rs
