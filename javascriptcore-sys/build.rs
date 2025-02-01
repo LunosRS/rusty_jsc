@@ -27,3 +27,6 @@ fn main() {
     println!("cargo:rustc-link-lib=dylib=JavaScriptCore");
     println!("cargo:rustc-link-lib=dylib=WTF");
 }
+
+#[cfg(not(target_os = "windows"))]
+fn main() {}

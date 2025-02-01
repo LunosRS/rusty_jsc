@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "javascriptcore"
-version = "0.0.6"
+version = "0.2.42"
 dependencies = [
  "javascriptcore-macros",
  "javascriptcore-sys",
@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "javascriptcore-macros"
-version = "0.0.6"
+version = "0.1.42"
 dependencies = [
  "quote",
  "syn",
@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "javascriptcore-sys"
-version = "0.0.6"
+version = "0.1.42"
 dependencies = [
  "pkg-config",
 ]

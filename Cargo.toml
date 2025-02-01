@@ -3,20 +3,16 @@ members = ["javascriptcore-sys", "javascriptcore-macros"]
 
 [package]
 name = "javascriptcore"
-version = "0.0.6"
+version = "0.2.42"
 edition = "2021"
-authors = ["Bruce Mitchener <bruce.mitchener@gmail.com>"]
+authors = ["LunosRS", "Bruce Mitchener <bruce.mitchener@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 description = "Bindings to the JavaScriptCore framework."
-keywords = ["javascript", "jsc", "scripting"]
-documentation = "https://docs.rs/javascriptcore"
-homepage = "https://github.com/endoli/javascriptcore.rs"
-repository = "https://github.com/endoli/javascriptcore.rs"
 categories = ["api-bindings"]
 exclude = ["javascript_core/**"]
 
 [dependencies]
-javascriptcore-macros = { path = "javascriptcore-macros", version = "0.0.6" }
-javascriptcore-sys = { path = "javascriptcore-sys", version = "0.0.6" }
+javascriptcore-macros = { path = "javascriptcore-macros", version = "0.1.42" }
+javascriptcore-sys = { path = "javascriptcore-sys", version = "0.1.42" }
 thiserror = "2.0.4"
