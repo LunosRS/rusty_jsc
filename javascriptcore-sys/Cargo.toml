@@ -9,3 +9,11 @@ build = "build.rs"
 
 [target.'cfg(target_os = "linux")'.build-dependencies]
 pkg-config = "0.3.9"
+
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+[profile.release]
+inherits = "release"
+codegen-units = 1
+lto = true
