@@ -1,5 +1,5 @@
 [workspace]
-members = ["javascriptcore-sys", "javascriptcore-macros"]
+members = ["jsc_rs", "javascriptcore-macros"]
 
 [package]
 name = "javascriptcore"
