@@ -14,7 +14,7 @@ exclude = ["javascript_core/**"]
 
 [dependencies]
 javascriptcore-macros = { path = "javascriptcore-macros", version = "0.1.42" }
-javascriptcore-sys = { path = "javascriptcore-sys", version = "0.1.42" }
+javascriptcore-sys = { path = "jsc_rs", version = "0.1.42" }
 thiserror = "2.0.4"
 
 [profile.release]
