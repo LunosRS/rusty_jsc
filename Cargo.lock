@@ -7,7 +7,7 @@ name = "javascriptcore"
 version = "0.2.42"
 dependencies = [
  "javascriptcore-macros",
- "javascriptcore-sys",
+ "jsc_rs",
  "thiserror",
 ]
 
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "javascriptcore-sys"
+name = "jsc_rs"
 version = "0.1.42"
 dependencies = [
  "pkg-config",

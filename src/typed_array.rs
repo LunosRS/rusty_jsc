@@ -167,7 +167,7 @@ impl JSTypedArray {
     /// assert_eq!(bytes, &[1, 12, 3, 14, 5]);
     /// ```
     pub unsafe fn as_mut_slice(&mut self) -> Result<&mut [u8], JSException> {
-        self.as_mut_slice_impl()
+        unsafe { self.as_mut_slice_impl() }
     }
 
     unsafe fn as_mut_slice_impl(&self) -> Result<&mut [u8], JSException> {
@@ -175,17 +175,19 @@ impl JSTypedArray {
         let length = self.len()?;
 
         let mut exception: sys::JSValueRef = ptr::null_mut();
-        let ptr = sys::JSObjectGetTypedArrayBytesPtr(self.ctx, self.raw, &mut exception);
+        let ptr = unsafe { sys::JSObjectGetTypedArrayBytesPtr(self.ctx, self.raw, &mut exception) };
 
         if !exception.is_null() {
-            Err(JSValue::from_raw(self.ctx, exception).into())
+            Err(unsafe { JSValue::from_raw(self.ctx, exception).into() })
         } else {
             assert!(!ptr.is_null(), "`ptr` must not be null");
 
-            Ok(slice::from_raw_parts_mut(
-                ptr.offset(offset.try_into().unwrap()).cast::<u8>(),
-                length,
-            ))
+            Ok(unsafe {
+                slice::from_raw_parts_mut(
+                    ptr.offset(offset.try_into().unwrap()).cast::<u8>(),
+                    length,
+                )
+            })
         }
     }
 

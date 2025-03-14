@@ -122,7 +122,7 @@ pub type JSValueRef = *const OpaqueJSValue;
 /// A JavaScript object. A [`JSObjectRef`] is a [`JSValueRef`].
 pub type JSObjectRef = *mut OpaqueJSValue;
 
-extern "C" {
+unsafe extern "C" {
     /// Evaluates a string of JavaScript.
     ///
     /// * `ctx`: The execution context to use.
@@ -260,7 +260,7 @@ pub enum JSTypedArrayType {
     BigUint64Array = 12,
 }
 
-extern "C" {
+unsafe extern "C" {
     /// Returns a JavaScript value's type.
     ///
     /// * `ctx`: The execution context to use.
@@ -1125,7 +1125,7 @@ impl Default for JSClassDefinition {
     }
 }
 
-extern "C" {
+unsafe extern "C" {
     /// Creates a JavaScript class suitable for use with [`JSObjectMake`].
     ///
     /// * `definition`: A [`JSClassDefinition`] that defines the class.
@@ -1951,7 +1951,7 @@ extern "C" {
 /// with all scalar types, endianness depends on the underlying
 /// architecture.
 pub type JSChar = ::std::os::raw::c_ushort;
-extern "C" {
+unsafe extern "C" {
     /// Creates a JavaScript string from a buffer of Unicode characters.
     ///
     /// * `chars`: The buffer of Unicode characters to copy into the

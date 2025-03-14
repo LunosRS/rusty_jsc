@@ -280,14 +280,14 @@ impl JSValue {
         };
 
         if !exception.is_null() {
-            return Err(Self::from_raw(ctx.raw, exception).into());
+            return Err(unsafe { Self::from_raw(ctx.raw, exception).into() });
         }
 
         if result.is_null() {
             return Err(Self::new_string(ctx, "Failed to make a new typed array").into());
         }
 
-        Ok(Self::from_raw(ctx.raw, result))
+        Ok(unsafe { Self::from_raw(ctx.raw, result) })
     }
 
     /// Creates a JavaScript function where the function implementation is written in
@@ -791,7 +791,7 @@ impl JSValue {
     /// * [`JSValue::unprotect()`]
     ///
     /// [`garbage_collect()`]: crate::garbage_collect
-    /// [unprotected]: crate::JSValue::unprotect
+    /// [unprotected]: JSValue::unprotect
     pub fn protect(&self) {
         unsafe { sys::JSValueProtect(self.ctx, self.raw) };
     }
@@ -808,7 +808,7 @@ impl JSValue {
     /// * [`JSValue::protect()`]
     ///
     /// [`garbage_collect()`]: crate::garbage_collect
-    /// [protected]: crate::JSValue::protect
+    /// [protected]: JSValue::protect
     pub fn unprotect(&self) {
         unsafe { sys::JSValueUnprotect(self.ctx, self.raw) };
     }

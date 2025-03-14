@@ -17,7 +17,7 @@ impl JSObject {
     pub const unsafe fn from_raw(ctx: sys::JSContextRef, raw: sys::JSObjectRef) -> Self {
         Self {
             raw,
-            value: JSValue::from_raw(ctx, raw),
+            value: unsafe { JSValue::from_raw(ctx, raw) },
         }
     }
 

@@ -1,12 +1,10 @@
 [package]
 name = "javascriptcore-macros"
 version = "0.1.42"
-edition = "2021"
+edition = "2024"
 authors = ["LunosRS", "Bruce Mitchener <bruce.mitchener@gmail.com>", "Ivan Enderlin <ivan@mnt.io>"]
 license = "MIT OR Apache-2.0"
 description = "Procedural macros for the `javascriptcore` crate."
-keywords = ["javascript", "jsc", "scripting"]
-categories = ["external-ffi-bindings"]
 
 [lib]
 proc-macro = true

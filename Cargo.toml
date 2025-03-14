@@ -4,17 +4,16 @@ members = ["jsc_rs", "javascriptcore-macros"]
 [package]
 name = "javascriptcore"
 version = "0.2.42"
-edition = "2021"
+edition = "2024"
 authors = ["LunosRS", "Bruce Mitchener <bruce.mitchener@gmail.com>"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 description = "Bindings to the JavaScriptCore framework."
-categories = ["api-bindings"]
 exclude = ["javascript_core/**"]
 
 [dependencies]
 javascriptcore-macros = { path = "javascriptcore-macros", version = "0.1.42" }
-javascriptcore-sys = { path = "jsc_rs", version = "0.1.42" }
+jsc_rs = { path = "jsc_rs", version = "0.1.42" }
 thiserror = "2.0.4"
 
 [profile.release]
