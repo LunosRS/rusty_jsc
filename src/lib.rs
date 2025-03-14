@@ -21,7 +21,7 @@ use std::ffi::CString;
 
 pub use javascriptcore_macros::{constructor_callback, function_callback};
 #[doc(hidden)]
-pub use jsc_rs as sys;
+pub use rusty_jsc as sys;
 
 mod base;
 mod class;

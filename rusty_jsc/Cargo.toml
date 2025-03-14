@@ -1,5 +1,5 @@
 [package]
-name = "jsc_rs"
+name = "rusty_jsc"
 version = "0.1.42"
 edition = "2024"
 license = "MIT OR Apache-2.0"
