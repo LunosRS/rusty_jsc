@@ -2304,3 +2304,44 @@ unsafe extern "C" {
         exception: *mut JSValueRef,
     ) -> usize;
 }
+
+
+/// Converts a JavaScript value into a Rust `String`.
+///
+/// # Safety
+///
+/// This function is marked as `unsafe` because it interacts with raw pointers
+/// and assumes the provided pointers are valid and point to the expected types.
+///
+/// # Parameters
+///
+/// - `context`: A pointer to the JavaScript execution context (`*const OpaqueJSContext`).
+/// - `value`: A pointer to the JavaScript value to convert (`*const OpaqueJSValue`).
+///
+/// # Returns
+///
+/// Returns an `Option<String>` containing the Rust `String` representation of the JavaScript value.
+/// Returns `None` if the conversion fails or if the JavaScript value cannot be represented as a string.
+pub unsafe fn JSValAsString(
+    context: *const OpaqueJSContext,
+    value: *const OpaqueJSValue,
+) -> Option<String> {
+    let js_string = unsafe { JSValueToStringCopy(context, value, std::ptr::null_mut()) };
+    if js_string.is_null() {
+        return None;
+    }
+
+    let max_size = unsafe { JSStringGetMaximumUTF8CStringSize(js_string) };
+    let mut buffer: Vec<u8> = vec![0; max_size];
+    let length = unsafe { JSStringGetUTF8CString(js_string, buffer.as_mut_ptr() as *mut i8, max_size) };
+    unsafe {
+        JSStringRelease(js_string);
+    }
+
+    if length == 0 {
+        return None;
+    }
+
+    buffer.truncate(length - 1);
+    String::from_utf8(buffer).ok()
+}
