@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "javascriptcore"
-version = "0.2.42"
+version = "0.3.0"
 dependencies = [
  "javascriptcore-macros",
  "rusty_jsc",

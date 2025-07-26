@@ -3,7 +3,7 @@ members = ["rusty_jsc", "javascriptcore-macros"]
 
 [package]
 name = "javascriptcore"
-version = "0.2.42"
+version = "0.3.0"
 edition = "2024"
 authors = ["LunosRS", "Bruce Mitchener <bruce.mitchener@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -18,10 +18,16 @@ thiserror = "2.0.4"
 
 [profile.release]
 opt-level = 3
-lto = true
+lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+overflow-checks = false
+debug = false
+incremental = false
 
 [profile.dev]
 opt-level = 1  # Slightly faster builds while maintaining good debug info
+
+[build]
+rustflags = ["-C", "target-cpu=native"]

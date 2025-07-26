@@ -47,18 +47,38 @@ impl fmt::Debug for JSString {
 
 impl fmt::Display for JSString {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let s = unsafe {
+        // Optimization: Use stack allocation for small strings to avoid heap allocation
+        const SMALL_STRING_SIZE: usize = 128;
+        
+        unsafe {
             let max_size = sys::JSStringGetMaximumUTF8CStringSize(self.raw);
-            let mut buffer: Vec<u8> = Vec::with_capacity(max_size);
-            let actual_size = sys::JSStringGetUTF8CString(
-                self.raw,
-                buffer.as_mut_ptr().cast::<::std::os::raw::c_char>(),
-                max_size,
-            );
-            buffer.set_len(actual_size - 1);
-            String::from_utf8(buffer).unwrap()
-        };
-        write!(fmt, "{s}")
+            
+            if max_size <= SMALL_STRING_SIZE {
+                // For small strings, use stack allocation
+                let mut stack_buffer = [0u8; SMALL_STRING_SIZE];
+                let actual_size = sys::JSStringGetUTF8CString(
+                    self.raw,
+                    stack_buffer.as_mut_ptr().cast::<::std::os::raw::c_char>(),
+                    SMALL_STRING_SIZE,
+                );
+                
+                // Create a string slice directly from the stack buffer
+                // Subtract 1 to remove null terminator
+                let s = std::str::from_utf8(&stack_buffer[0..actual_size - 1]).unwrap();
+                write!(fmt, "{s}")
+            } else {
+                // For larger strings, fall back to heap allocation
+                let mut buffer: Vec<u8> = Vec::with_capacity(max_size);
+                let actual_size = sys::JSStringGetUTF8CString(
+                    self.raw,
+                    buffer.as_mut_ptr().cast::<::std::os::raw::c_char>(),
+                    max_size,
+                );
+                buffer.set_len(actual_size - 1);
+                let s = String::from_utf8(buffer).unwrap();
+                write!(fmt, "{s}")
+            }
+        }
     }
 }
 
@@ -74,49 +94,86 @@ impl PartialEq for JSString {
     }
 }
 
+fn js_string_equals_str(js_string: &JSString, rust_str: &str) -> bool {
+    // Optimization: Use a stack-allocated buffer for small strings to avoid heap allocation
+    const SMALL_STRING_SIZE: usize = 128;
+    
+    if rust_str.len() < SMALL_STRING_SIZE {
+        // For small strings, use a stack-allocated buffer with a null terminator
+        let mut buffer = [0u8; SMALL_STRING_SIZE + 1]; // +1 for null terminator
+        let bytes = rust_str.as_bytes();
+        buffer[..bytes.len()].copy_from_slice(bytes);
+        buffer[bytes.len()] = 0; // Null terminator
+        
+        unsafe { 
+            sys::JSStringIsEqualToUTF8CString(js_string.raw, buffer.as_ptr() as *const ::std::os::raw::c_char) 
+        }
+    } else {
+        // For larger strings, fall back to CString
+        let utf8 = CString::new(rust_str.as_bytes()).unwrap();
+        unsafe { sys::JSStringIsEqualToUTF8CString(js_string.raw, utf8.as_ptr()) }
+    }
+}
+
 impl<'s> PartialEq<&'s str> for JSString {
     fn eq(&self, other: &&'s str) -> bool {
-        let utf8 = CString::new(other.as_bytes()).unwrap();
-        unsafe { sys::JSStringIsEqualToUTF8CString(self.raw, utf8.as_ptr()) }
+        js_string_equals_str(self, other)
     }
 }
 
 impl PartialEq<String> for JSString {
     fn eq(&self, other: &String) -> bool {
-        let utf8 = CString::new(other.as_bytes()).unwrap();
-        unsafe { sys::JSStringIsEqualToUTF8CString(self.raw, utf8.as_ptr()) }
+        js_string_equals_str(self, other.as_str())
     }
 }
 
 impl PartialEq<JSString> for &str {
     fn eq(&self, other: &JSString) -> bool {
-        let utf8 = CString::new(self.as_bytes()).unwrap();
-        unsafe { sys::JSStringIsEqualToUTF8CString(other.raw, utf8.as_ptr()) }
+        js_string_equals_str(other, self)
     }
 }
 
 impl PartialEq<JSString> for String {
     fn eq(&self, other: &JSString) -> bool {
-        let utf8 = CString::new(self.as_bytes()).unwrap();
-        unsafe { sys::JSStringIsEqualToUTF8CString(other.raw, utf8.as_ptr()) }
+        js_string_equals_str(other, self.as_str())
+    }
+}
+
+// Helper function to create a JSString from a Rust string
+fn js_string_from_str(s: &str) -> JSString {
+    // Optimization: Use a stack-allocated buffer for small strings to avoid heap allocation
+    const SMALL_STRING_SIZE: usize = 128;
+    
+    if s.len() < SMALL_STRING_SIZE {
+        // For small strings, use a stack-allocated buffer with a null terminator
+        let mut buffer = [0u8; SMALL_STRING_SIZE + 1]; // +1 for null terminator
+        let bytes = s.as_bytes();
+        buffer[..bytes.len()].copy_from_slice(bytes);
+        buffer[bytes.len()] = 0; // Null terminator
+        
+        JSString {
+            raw: unsafe { 
+                sys::JSStringCreateWithUTF8CString(buffer.as_ptr() as *const ::std::os::raw::c_char) 
+            },
+        }
+    } else {
+        // For larger strings, fall back to CString
+        let c = CString::new(s.as_bytes()).unwrap();
+        JSString {
+            raw: unsafe { sys::JSStringCreateWithUTF8CString(c.as_ptr()) },
+        }
     }
 }
 
 impl From<&str> for JSString {
     fn from(s: &str) -> Self {
-        let c = CString::new(s.as_bytes()).unwrap();
-        JSString {
-            raw: unsafe { sys::JSStringCreateWithUTF8CString(c.as_ptr()) },
-        }
+        js_string_from_str(s)
     }
 }
 
 impl From<String> for JSString {
     fn from(s: String) -> Self {
-        let c = CString::new(s.as_bytes()).unwrap();
-        JSString {
-            raw: unsafe { sys::JSStringCreateWithUTF8CString(c.as_ptr()) },
-        }
+        js_string_from_str(&s)
     }
 }
 

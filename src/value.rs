@@ -197,27 +197,55 @@ impl JSValue {
     ///
     /// - [`JSValue::is_array()`]
     pub fn new_array(ctx: &JSContext, items: &[JSValue]) -> Result<Self, JSException> {
-        let items = items
-            .iter()
-            .map(|argument| argument.raw)
-            .collect::<Vec<_>>();
+        // Optimization: Use stack allocation for small arrays to avoid heap allocation
+        const SMALL_ARRAY_SIZE: usize = 16;
+        
         let mut exception: sys::JSValueRef = ptr::null_mut();
-
-        let result = unsafe {
-            sys::JSObjectMakeArray(
-                ctx.raw,
-                items.len(),
-                items.as_slice().as_ptr(),
-                &mut exception,
-            )
-        };
+        let result;
+        
+        if items.len() <= SMALL_ARRAY_SIZE {
+            // For small arrays, use stack allocation
+            // Create an array of *const OpaqueJSValue pointers on the stack
+            let mut stack_items: [sys::JSValueRef; SMALL_ARRAY_SIZE] = [ptr::null(); SMALL_ARRAY_SIZE];
+            
+            // Copy the raw pointers to the stack array
+            for (i, item) in items.iter().enumerate() {
+                stack_items[i] = item.raw;
+            }
+            
+            result = unsafe {
+                sys::JSObjectMakeArray(
+                    ctx.raw,
+                    items.len(),
+                    stack_items.as_ptr(),
+                    &mut exception,
+                )
+            };
+        } else {
+            // For larger arrays, fall back to heap allocation
+            let items = items
+                .iter()
+                .map(|argument| argument.raw)
+                .collect::<Vec<_>>();
+                
+            result = unsafe {
+                sys::JSObjectMakeArray(
+                    ctx.raw,
+                    items.len(),
+                    items.as_ptr(),
+                    &mut exception,
+                )
+            };
+        }
 
         if !exception.is_null() {
             return Err(unsafe { Self::from_raw(ctx.raw, exception).into() });
         }
 
         if result.is_null() {
-            return Err(Self::new_string(ctx, "Failed to make a new array").into());
+            // Optimization: Use a static string for common error messages
+            static ERROR_MSG: &str = "Failed to make a new array";
+            return Err(Self::new_string(ctx, ERROR_MSG).into());
         }
 
         Ok(unsafe { Self::from_raw(ctx.raw, result) })
@@ -284,7 +312,9 @@ impl JSValue {
         }
 
         if result.is_null() {
-            return Err(Self::new_string(ctx, "Failed to make a new typed array").into());
+            // Optimization: Use a static string for common error messages
+            static ERROR_MSG: &str = "Failed to make a new typed array";
+            return Err(Self::new_string(ctx, ERROR_MSG).into());
         }
 
         Ok(unsafe { Self::from_raw(ctx.raw, result) })
@@ -761,10 +791,12 @@ impl JSValue {
     /// - [`JSValue::new_typed_array_with_bytes()`]
     pub fn as_typed_array(&self) -> Result<JSTypedArray, JSException> {
         if !self.is_typed_array() {
+            // Optimization: Use a static string for common error messages
+            static ERROR_MSG: &str = "Value is not a Typed Array";
             return Err(unsafe {
                 Self::from_raw(
                     self.ctx,
-                    JSString::from("Value is not a Typed Array").raw as *const _,
+                    JSString::from(ERROR_MSG).raw as *const _,
                 )
             }
             .into());
